@@ -3,30 +3,41 @@ package flottio.livingdocumentation;
 import static flottio.livingdocumentation.SimpleTemplate.evaluate;
 import static flottio.livingdocumentation.SimpleTemplate.readTestResource;
 import static flottio.livingdocumentation.SimpleTemplate.write;
-import static org.livingdocumentation.dotdiagram.DotStyles.ASSOCIATION_EDGE_STYLE;
-import static org.livingdocumentation.dotdiagram.DotStyles.IMPLEMENTS_EDGE_STYLE;
+import static guru.nidi.graphviz.model.Factory.graph;
+import static guru.nidi.graphviz.model.Factory.node;
+import static guru.nidi.graphviz.model.Factory.to;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.Test;
-import org.livingdocumentation.dotdiagram.DotGraph;
-import org.livingdocumentation.dotdiagram.DotGraph.Cluster;
-import org.livingdocumentation.dotdiagram.DotGraph.Digraph;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
+
+import guru.nidi.graphviz.attribute.Arrow;
+import guru.nidi.graphviz.attribute.Font;
+import guru.nidi.graphviz.attribute.Label;
+import guru.nidi.graphviz.attribute.RankDir;
+import guru.nidi.graphviz.attribute.Shape;
+import guru.nidi.graphviz.attribute.Style;
+import guru.nidi.graphviz.model.Graph;
+import guru.nidi.graphviz.model.MutableGraph;
+import guru.nidi.graphviz.model.Node;
+import guru.nidi.graphviz.model.Serializer;
 
 /**
  * Living Diagram of the Hexagonal Architecture generated out of the code thanks
  * to the package naming conventions.
  */
 public class LivingDiagramTest {
-
-	private final DotGraph graph = new DotGraph("Hexagonal Architecture", "LR");
 
 	@Test
 	public void generateDiagram() throws Exception {
@@ -35,74 +46,93 @@ public class LivingDiagramTest {
 		final String prefix = "flottio.fuelcardmonitoring";
 		final ImmutableSet<ClassInfo> allClasses = classPath.getTopLevelClassesRecursive(prefix);
 
-		final Digraph digraph = graph.getDigraph();
-		digraph.setOptions("rankdir=LR");
+		Graph graph = buildEmptyGraph();
+		Graph hexagon = graph().cluster().graphAttr().with(Label.of("Core Domain"));
+		HashMap<String, Node> nodes = new HashMap<>();
 
-		Stream<ClassInfo> domain = allClasses.stream().filter(filter(prefix, "domain"));
-		final Cluster core = digraph.addCluster("hexagon");
-		core.setLabel("Core Domain");
+		List<ClassInfo> domain = allClasses.stream().filter(filter(prefix, "domain")).collect(Collectors.toList());
 
 		// add all domain model elements first
-		domain.forEach(new Consumer<ClassInfo>() {
-			public void accept(ClassInfo ci) {
-				final Class clazz = ci.load();
-				core.addNode(clazz.getName()).setLabel(clazz.getSimpleName()).setComment(clazz.getSimpleName());
-			}
-		});
+		for(ClassInfo ci : domain) {
+			final Class clazz = ci.load();
+			nodes.put(clazz.getName(), node(clazz.getSimpleName()));
+			hexagon = hexagon.with(nodes.get(clazz.getName()));
+		}
+		graph = graph.with(hexagon);
 
-		Stream<ClassInfo> infra = allClasses.stream().filter(filterNot(prefix, "domain"));
-		infra.forEach(new Consumer<ClassInfo>() {
-			public void accept(ClassInfo ci) {
-				final Class clazz = ci.load();
-				digraph.addNode(clazz.getName()).setLabel(clazz.getSimpleName()).setComment(clazz.getSimpleName());
-			}
-		});
-		infra = allClasses.stream().filter(filterNot(prefix, "domain"));
-		infra.forEach(new Consumer<ClassInfo>() {
-			public void accept(ClassInfo ci) {
-				final Class clazz = ci.load();
-				// API
-				for (Field field : clazz.getDeclaredFields()) {
-					final Class<?> type = field.getType();
-					if (!type.isPrimitive()) {
-						digraph.addExistingAssociation(clazz.getName(), type.getName(), null, null,
-								ASSOCIATION_EDGE_STYLE);
+		List<ClassInfo> infra = allClasses.stream().filter(filterNot(prefix, "domain")).collect(Collectors.toList());
+		for(ClassInfo ci : infra) {
+			final Class clazz = ci.load();
+			nodes.put(clazz.getName(), node(clazz.getSimpleName()));
+			graph = graph.with(nodes.get(clazz.getName()));
+		}
+		
+		infra = allClasses.stream().filter(filterNot(prefix, "domain")).collect(Collectors.toList());
+
+		List<ClassInfo> classes = new ArrayList<>();
+		classes.addAll(infra);
+		classes.addAll(domain);
+		for(ClassInfo ci : classes) {
+			final Class clazz = ci.load();
+			// API
+			Graph target = graph();
+			boolean link = false;
+			for (Field field : clazz.getDeclaredFields()) {
+				final Class<?> type = field.getType();
+				if (!type.isPrimitive()) {
+					if(nodes.get(type.getName()) != null && nodes.get(clazz.getName()) != null) {
+						target = target.with(nodes.get(type.getName()));
+						link = true;
 					}
 				}
-
-				// SPI
-				for (Class intf : clazz.getInterfaces()) {
-					digraph.addExistingAssociation(intf.getName(), clazz.getName(), null, null, IMPLEMENTS_EDGE_STYLE);
-				}
 			}
-		});
+			if(link)
+				graph = graph.with(nodes.get(clazz.getName()).link(to(target)));
 
-		// then wire them together
-		domain = allClasses.stream().filter(filter(prefix, "domain"));
-		domain.forEach(new Consumer<ClassInfo>() {
-			public void accept(ClassInfo ci) {
-				final Class clazz = ci.load();
-				for (Field field : clazz.getDeclaredFields()) {
-					final Class<?> type = field.getType();
-					if (!type.isPrimitive()) {
-						digraph.addExistingAssociation(clazz.getName(), type.getName(), null, null,
-								ASSOCIATION_EDGE_STYLE);
-					}
-				}
-
-				for (Class intf : clazz.getInterfaces()) {
-					digraph.addExistingAssociation(intf.getName(), clazz.getName(), null, null, IMPLEMENTS_EDGE_STYLE);
-				}
+			// SPI
+			target = graph();
+			link = false;
+			for (Class intf : clazz.getInterfaces()) {
+				target = target.with(nodes.get(intf.getName()));
+				link = true;
 			}
-		});
+			if(link)
+				graph = graph.with(nodes.get(clazz.getName()).link(to(target).with(Style.DASHED, Arrow.NORMAL.open())));
+		}
 
 		// render into image
 		final String template = readTestResource("viz-template.html");
 
 		String title = "Living Diagram";
-		final String content = graph.render().trim();
+		final String content = fromGraphToDotString(graph);
 		final String text = evaluate(template, title, content);
 		write("", "livinggdiagram.html", text);
+	}
+
+	private String fromGraphToDotString(Graph graph) {
+		return new Serializer((MutableGraph) graph).serialize();
+	}
+	
+	private Graph buildEmptyGraph() {
+		return graph()
+				.directed()
+				.graphAttr().with(
+						RankDir.LEFT_TO_RIGHT, 
+						Label.of("Hexagonal Architecture").
+						locate(Label.Location.TOP),
+						Font.name("Verdana"),
+						Font.size(12)
+					)
+				.linkAttr().with(
+						Font.name("Verdana"),
+						Font.size(9),
+						Arrow.VEE
+					)
+				.nodeAttr().with(
+						Shape.RECTANGLE,
+						Font.name("Verdana"),
+						Font.size(9)
+					);
 	}
 
 	private Predicate<ClassInfo> filter(final String prefix, final String layer) {

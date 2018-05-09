@@ -3,19 +3,17 @@ package flottio.livingdocumentation;
 import static flottio.livingdocumentation.SimpleTemplate.evaluate;
 import static flottio.livingdocumentation.SimpleTemplate.readTestResource;
 import static flottio.livingdocumentation.SimpleTemplate.write;
-import static org.livingdocumentation.dotdiagram.DotStyles.NOTE_EDGE_STYLE;
-import static org.livingdocumentation.dotdiagram.DotStyles.STUB_NODE_OPTIONS;
+import static guru.nidi.graphviz.model.Factory.graph;
+import static guru.nidi.graphviz.model.Factory.node;
+import static guru.nidi.graphviz.model.Factory.to;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
-
+import java.util.stream.Collectors;
 import org.junit.Test;
-import org.livingdocumentation.dotdiagram.DotGraph;
-import org.livingdocumentation.dotdiagram.DotGraph.Digraph;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
@@ -26,6 +24,18 @@ import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import flottio.annotations.BoundedContext;
 import flottio.annotations.ExternalActor;
 import flottio.annotations.ExternalActor.ActorType;
+import guru.nidi.graphviz.attribute.Arrow;
+import guru.nidi.graphviz.attribute.Attributes;
+import guru.nidi.graphviz.attribute.Color;
+import guru.nidi.graphviz.attribute.Font;
+import guru.nidi.graphviz.attribute.Label;
+import guru.nidi.graphviz.attribute.RankDir;
+import guru.nidi.graphviz.attribute.Shape;
+import guru.nidi.graphviz.attribute.Style;
+import guru.nidi.graphviz.model.Graph;
+import guru.nidi.graphviz.model.MutableGraph;
+import guru.nidi.graphviz.model.Node;
+import guru.nidi.graphviz.model.Serializer;
 
 /**
  * Living Diagram of the system and its external actors generated out of the
@@ -36,7 +46,6 @@ public class SystemDiagramTest {
 	private static final String SCM_BASE_URL = "https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop";
 	private static final String PACKAGE_PREFIX = "flottio.fuelcardmonitoring";
 	private static final String SOURCE_TREE = "src/main/java";
-	private final DotGraph graph = new DotGraph("", "LR");
 
 	@Test
 	public void generateDiagram() throws Exception {
@@ -49,8 +58,8 @@ public class SystemDiagramTest {
 		final String prefix = PACKAGE_PREFIX;
 		final ImmutableSet<ClassInfo> allClasses = classPath.getTopLevelClassesRecursive(prefix);
 
-		final Digraph digraph = graph.getDigraph();
-		digraph.setOptions("rankdir=LR");
+		Graph graph = buildEmptyGraph();
+		HashMap<String, Node> nodes = new HashMap<>();
 
 		final String domainPackageName = prefix + "." + "domain";
 
@@ -67,24 +76,52 @@ public class SystemDiagramTest {
 			final BoundedContext bc = inventory.get(classInfo);
 			final String systemName = bc.name().trim() + " System";
 			// final String systemPicture = firstImageIn(bc.links());
-			digraph.addNode("system").setLabel(wrap(systemName, 19)).setComment("the system under consideration")
-					.setOptions(STUB_NODE_OPTIONS);
+//			digraph.addNode("system").setLabel(wrap(systemName, 19)).setComment("the system under consideration")
+//					.setOptions(STUB_NODE_OPTIONS);
+			nodes.put("system", node("system").with(
+					Label.of(wrap(systemName, 19)),
+					Color.GREY.font(),
+					Color.GREY
+			));
+			graph = graph.with(nodes.get("system"));
 
-			final Stream<ClassInfo> infra = allClasses.stream().filter(notIn("domain"));
-			infra.forEach(new Consumer<ClassInfo>() {
-				public void accept(ClassInfo ci) {
-					printActor(digraph, ci, builder);
-				}
-			});
+			final List<ClassInfo> infra = allClasses.stream().filter(notIn("domain")).collect(Collectors.toList());
+			for(ClassInfo ci : infra) {
+				graph = printActor(graph, nodes, ci, builder);
+			}
 		}
 
 		// render into image
 		final String template = readTestResource("viz-template.html");
 
 		String title = "Context Diagram";
-		final String content = graph.render().trim();
+		final String content = fromGraphToDotString(graph);
 		final String text = evaluate(template, title, content);
 		write("", "context-diagram.html", text);
+	}
+
+	private String fromGraphToDotString(Graph graph) {
+		return new Serializer((MutableGraph) graph).serialize();
+	}
+	
+	private Graph buildEmptyGraph() {
+		return graph()
+				.directed()
+				.graphAttr().with(
+						RankDir.LEFT_TO_RIGHT,
+						Font.name("Verdana"),
+						Font.size(12)
+					)
+				.linkAttr().with(
+						Font.name("Verdana"),
+						Font.size(9),
+						Arrow.VEE
+					)
+				.nodeAttr().with(
+						Shape.RECTANGLE,
+						Font.name("Verdana"),
+						Font.size(9)
+					);
 	}
 
 	private static String firstImageIn(String[] strings) {
@@ -114,30 +151,43 @@ public class SystemDiagramTest {
 		return sb.toString();
 	}
 
-	protected void printActor(Digraph digraph, ClassInfo ci, JavaProjectBuilder builder) {
-		// final String options =
-		// "shape=box, style=invis, shapefile=\"Turing.png\"";
-		final String url = ", URL=\"" + (SCM_BASE_URL + "/" + SOURCE_TREE + "/") + toPath(ci) + "\"";
-		final String options = "shape=box, style=filled,fillcolor=\"#C0D0C0\"" + url;
+	protected Graph printActor(Graph graph, HashMap<String, Node> nodes, ClassInfo ci, JavaProjectBuilder builder) {
+		final String url = (SCM_BASE_URL + "/" + SOURCE_TREE + "/") + toPath(ci) + "\"";
 
 		final ExternalActor[] actors = ci.load().getAnnotationsByType(ExternalActor.class);
 		for (ExternalActor actor : actors) {
-			digraph.addNode(ci.getName()).setLabel(wrap(actor.name(), 19)).setComment(ci.getSimpleName())
-					.setOptions(options); // .addStereotype(actorType(actor.type()))
+			nodes.put(ci.getName(), node(ci.getName()).with(
+					Label.of(wrap(actor.name(), 19)), 
+					Style.FILLED, 
+					Color.AZURE2.fill(),
+					Attributes.attr("URL", url)
+			));
+			graph  = graph.with(nodes.get(ci.getName()));
 
 			final String label = getComment(ci, builder);
 			switch (actor.direction()) {
 			case API:
-				digraph.addAssociation(ci.getName(), "system").setLabel(label).setOptions(NOTE_EDGE_STYLE);
+				graph = graph.with(nodes.get(ci.getName()).link(to(nodes.get("system")).with(Arrow.NONE, Label.of(label))));
 				break;
 			case SPI:
-				digraph.addAssociation("system", ci.getName()).setLabel(label).setOptions(NOTE_EDGE_STYLE);
+				graph = graph.with(nodes.get("system").link(to(nodes.get(ci.getName())).with(
+						Style.DASHED, 
+						Arrow.NONE, 
+						Label.of(label),
+						Attributes.attr("id", Math.random())
+				)));
 				break;
 			default:
-				digraph.addAssociation("system", ci.getName()).setLabel(label).setOptions(NOTE_EDGE_STYLE);
-				digraph.addAssociation(ci.getName(), "system").setLabel(label).setOptions(NOTE_EDGE_STYLE);
+				graph = graph.with(nodes.get("system").link(to(nodes.get(ci.getName())).with(
+						Style.DASHED, 
+						Arrow.NONE, 
+						Label.of(label),
+						Attributes.attr("id", Math.random())
+				)));
+				graph = graph.with(nodes.get(ci.getName()).link(to(nodes.get("system")).with(Arrow.NONE, Label.of(label))));
 			}
 		}
+		return graph;
 	}
 
 	public String toPath(ClassInfo ci) {

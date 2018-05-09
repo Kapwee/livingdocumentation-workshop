@@ -8,114 +8,84 @@
   <body>
     
     <script type="text/vnd.graphviz" id="custom">
-# Class diagram Hexagonal Architecture
-digraph G {
-	graph [labelloc=top,label="Hexagonal Architecture",fontname="Verdana",fontsize=12,rankdir=LR];
-	edge [fontname="Verdana",fontsize=9,labelfontname="Verdana",labelfontsize=9];
-	node [fontname="Verdana",fontsize=9,shape=record];
-subgraph cluster_c0 {
-label = "Core Domain";
-//Basket
-	c1 [label="Basket"]
-//Geocoding
-	c10 [label="Geocoding"]
-//LocationTracking
-	c11 [label="LocationTracking"]
-//Merchant
-	c12 [label="Merchant"]
-//Money
-	c13 [label="Money"]
-//Vehicle
-	c14 [label="Vehicle"]
-//VolumeUnit
-	c15 [label="VolumeUnit"]
-//package-info
-	c16 [label="package-info"]
-//Coordinates
-	c2 [label="Coordinates"]
-//DistanceUnit
-	c3 [label="DistanceUnit"]
-//FuelCardMonitoring
-	c4 [label="FuelCardMonitoring"]
-//FuelCardTransaction
-	c5 [label="FuelCardTransaction"]
-//FuelCardTransactionReport
-	c6 [label="FuelCardTransactionReport"]
-//FuelEconomy
-	c7 [label="FuelEconomy"]
-//FueldCard
-	c8 [label="FueldCard"]
-//GeoDistance
-	c9 [label="GeoDistance"]
+digraph {
+graph ["fontsize"="12","label"="Hexagonal Architecture","labelloc"="t","fontname"="Verdana","rankdir"="LR"]
+node ["fontsize"="9","shape"="rectangle","fontname"="Verdana"]
+edge ["fontsize"="9","arrowhead"="vee","fontname"="Verdana"]
+"ReportDAO"
+"package-info"
+"VehicleDatastore"
+subgraph "cluster_" {
+graph ["label"="Core Domain"]
+"Basket"
+"Coordinates"
+"DistanceUnit"
+"FuelCardMonitoring"
+"FuelCardTransaction"
+"FuelCardTransactionReport"
+"FueldCard"
+"FuelEconomy"
+"Geocoding"
+"GeoDistance"
+"LocationTracking"
+"Merchant"
+"Money"
+"package-info"
+"Vehicle"
+"VolumeUnit"
 }
-//FuelCardTxListener
-	c17 [label="FuelCardTxListener"]
-//ReportDAO
-	c18 [label="ReportDAO"]
-//SmartGISGeoCodingAdapter
-	c19 [label="SmartGISGeoCodingAdapter"]
-//WebServiceGPSTrackingAdapter
-	c20 [label="WebServiceGPSTrackingAdapter"]
-//FuelCardResource
-	c21 [label="FuelCardResource"]
-//ReportResource
-	c22 [label="ReportResource"]
-//package-info
-	c23 [label="package-info"]
-//VehicleDatastore
-	c24 [label="VehicleDatastore"]
-//package-info
-	c25 [label="package-info"]
-//FuelCardJMXBean
-	c26 [label="FuelCardJMXBean"]
-//package-info
-	c27 [label="package-info"]
-//package-info
-	c28 [label="package-info"]
-	// null
-	c26 -> c26 [arrowhead=open];
-	// null
-	c3 -> c3 [arrowhead=open];
-	// null
-	c7 -> c7 [arrowhead=open];
-	// null
-	c9 -> c9 [arrowhead=open];
-	// null
-	c13 -> c13 [arrowhead=open];
-	// null
-	c15 -> c15 [arrowhead=open];
-	// null
-	c6 -> c5 [arrowhead=open];
-	// null
-	c11 -> c20 [dir=back,arrowtail=empty,style=dashed];
-	// null
-	c17 -> c18 [arrowhead=open];
-	// null
-	c5 -> c8 [arrowhead=open];
-	// null
-	c10 -> c19 [dir=back,arrowtail=empty,style=dashed];
-	// null
-	c22 -> c18 [arrowhead=open];
-	// null
-	c1 -> c13 [arrowhead=open];
-	// null
-	c17 -> c24 [arrowhead=open];
-	// null
-	c21 -> c4 [arrowhead=open];
-	// null
-	c4 -> c10 [arrowhead=open];
-	// null
-	c4 -> c11 [arrowhead=open];
-	// null
-	c7 -> c20 [arrowhead=open];
-	// null
-	c5 -> c13 [arrowhead=open];
-	// null
-	c5 -> c12 [arrowhead=open];
-	// null
-	c17 -> c4 [arrowhead=open];
-	// null
-	c5 -> c1 [arrowhead=open];
+"FuelCardTxListener" -> {
+"FuelCardMonitoring"
+"VehicleDatastore"
+"ReportDAO"
+}
+"SmartGISGeoCodingAdapter" -> {
+"Geocoding"
+} ["style"="dashed","arrowhead"="onormal"]
+"FuelCardResource" -> {
+"FuelCardMonitoring"
+}
+"ReportResource" -> {
+"ReportDAO"
+}
+"WebServiceGPSTrackingAdapter" -> {
+"LocationTracking"
+} ["style"="dashed","arrowhead"="onormal"]
+"FuelCardJMXBean" -> {
+"FuelCardJMXBean"
+}
+"Basket" -> {
+"Money"
+}
+"DistanceUnit" -> {
+"DistanceUnit"
+}
+"FuelCardMonitoring" -> {
+"LocationTracking"
+"Geocoding"
+}
+"FuelCardTransaction" -> {
+"FueldCard"
+"Merchant"
+"Basket"
+"Money"
+}
+"FuelCardTransactionReport" -> {
+"FuelCardTransaction"
+}
+"FuelEconomy" -> {
+"FuelEconomy"
+"WebServiceGPSTrackingAdapter"
+}
+"GeoDistance" -> {
+"GeoDistance"
+}
+"Money" -> {
+"Money"
+}
+"VolumeUnit" -> {
+"VolumeUnit"
+}
 }
 	</script>
     <script src="lib/viz.js"></script>

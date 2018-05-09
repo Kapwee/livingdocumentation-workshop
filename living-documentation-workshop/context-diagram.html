@@ -8,59 +8,25 @@
   <body>
     
     <script type="text/vnd.graphviz" id="custom">
-# Class diagram 
-digraph G {
-	graph [labelloc=top,label="",fontname="Verdana",fontsize=12,rankdir=LR];
-	edge [fontname="Verdana",fontsize=9,labelfontname="Verdana",labelfontsize=9];
-	node [fontname="Verdana",fontsize=9,shape=record];
-//the system under consideration
-	c0 [label="Fuel Card
-Monitoring \lSystem", color=grey,fontcolor=grey,fontname="Verdana",fontsize=9]
-//FuelCardTxListener
-	c1 [label="Fuelo Fuel Card
-Provider", shape=box, style=filled,fillcolor="#C0D0C0", URL="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/FuelCardTxListener.java"]
-//ReportDAO
-	c2 [label="Monitoring via DB
-polling", shape=box, style=filled,fillcolor="#C0D0C0", URL="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/ReportDAO.java"]
-//SmartGISGeoCodingAdapter
-	c3 [label="Google Geocoding
-Provider", shape=box, style=filled,fillcolor="#C0D0C0", URL="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/SmartGISGeoCodingAdapter.java"]
-//WebServiceGPSTrackingAdapter
-	c4 [label="Garmin GPS Tracking
-Gateway", shape=box, style=filled,fillcolor="#C0D0C0", URL="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/WebServiceGPSTrackingAdapter.java"]
-//package-info
-	c5 [label="Fleet Management
-Teams", shape=box, style=filled,fillcolor="#C0D0C0", URL="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/web/"]
-//package-info
-	c6 [label="Legacy Vehicle
-Assignment\l System", shape=box, style=filled,fillcolor="#C0D0C0", URL="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/legacy/"]
-//package-info
-	c7 [label="Support &
-Monitoring \lAgents", shape=box, style=filled,fillcolor="#C0D0C0", URL="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/monitoring/"]
-	// null
-	c2 -> c0 [arrowhead=none,style=dashed];
-	// null
-	c1 -> c0 [label="Listens to incoming fuel card
-transactions from the
-external system of the
-Fuel
-Card Provider"  , arrowhead=none,style=dashed];
-	// null
-	c7 -> c0 [arrowhead=none,style=dashed];
-	// null
-	c0 -> c4 [arrowhead=none,style=dashed];
-	// null
-	c0 -> c3 [arrowhead=none,style=dashed];
-	// null
-	c0 -> c6 [label="Vehicle Management is a legacy
-system which manages which
-drivers is associated to a
-vehicle for a period of time
-."  , arrowhead=none,style=dashed];
-	// null
-	c5 -> c0 [label="The fleet management team
-investigates any anomaly
-about fuel cards"  , arrowhead=none,style=dashed];
+digraph {
+graph ["fontsize"="12","fontname"="Verdana","rankdir"="LR"]
+node ["fontsize"="9","shape"="rectangle","fontname"="Verdana"]
+edge ["fontsize"="9","arrowhead"="vee","fontname"="Verdana"]
+"system" ["fontcolor"="grey","label"="Fuel Card\nMonitoring System","color"="grey"]
+"flottio.fuelcardmonitoring.infra.FuelCardTxListener" ["style"="filled","fillcolor"="azure2","label"="Fuelo Fuel Card\nProvider","URL"="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/FuelCardTxListener.java\""]
+"flottio.fuelcardmonitoring.infra.ReportDAO" ["style"="filled","fillcolor"="azure2","label"="Monitoring via DB\npolling","URL"="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/ReportDAO.java\""]
+"flottio.fuelcardmonitoring.infra.SmartGISGeoCodingAdapter" ["style"="filled","fillcolor"="azure2","label"="Google Geocoding\nProvider","URL"="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/SmartGISGeoCodingAdapter.java\""]
+"flottio.fuelcardmonitoring.infra.web.package-info" ["style"="filled","fillcolor"="azure2","label"="Fleet Management\nTeams","URL"="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/web/\""]
+"flottio.fuelcardmonitoring.infra.WebServiceGPSTrackingAdapter" ["style"="filled","fillcolor"="azure2","label"="Garmin GPS Tracking\nGateway","URL"="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/infra/WebServiceGPSTrackingAdapter.java\""]
+"flottio.fuelcardmonitoring.legacy.package-info" ["style"="filled","fillcolor"="azure2","label"="Legacy Vehicle\nAssignment System","URL"="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/legacy/\""]
+"flottio.fuelcardmonitoring.monitoring.package-info" ["style"="filled","fillcolor"="azure2","label"="Support &\nMonitoring Agents","URL"="https://github.com/cyriux/livingdocumentation-workshop/blob/master/living-documentation-workshop/src/main/java/flottio/fuelcardmonitoring/monitoring/\""]
+"system" -> "flottio.fuelcardmonitoring.legacy.package-info" ["style"="dashed","arrowhead"="none","label"="Vehicle Management is a legacy\nsystem which manages which\ndrivers is associated to a\nvehicle for a period of time\n.","id"="0.5096923794489664"]
+"system" -> "flottio.fuelcardmonitoring.infra.WebServiceGPSTrackingAdapter" ["style"="dashed","arrowhead"="none","label"="","id"="0.6267688364376939"]
+"system" -> "flottio.fuelcardmonitoring.infra.SmartGISGeoCodingAdapter" ["style"="dashed","arrowhead"="none","label"="","id"="0.3263747384623624"]
+"flottio.fuelcardmonitoring.infra.FuelCardTxListener" -> "system" ["arrowhead"="none","label"="Listens to incoming fuel card\ntransactions from the\nexternal system of the\nFuel\nCard Provider"]
+"flottio.fuelcardmonitoring.infra.ReportDAO" -> "system" ["arrowhead"="none","label"=""]
+"flottio.fuelcardmonitoring.infra.web.package-info" -> "system" ["arrowhead"="none","label"="The fleet management team\ninvestigates any anomaly\nabout fuel cards"]
+"flottio.fuelcardmonitoring.monitoring.package-info" -> "system" ["arrowhead"="none","label"=""]
 }
 	</script>
     <script src="lib/viz.js"></script>
